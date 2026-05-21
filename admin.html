@@ -7,22 +7,26 @@
     <style>
         :root { --primary-pink: #ff9aa2; --bg-pink: #fff5f5; --white: #ffffff; --text-dark: #6d5959; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'PingFang TC', sans-serif; }
-        body { background-color: var(--bg-pink); color: var(--text-dark); padding: 20px; }
+        body { background-color: var(--bg-pink); color: var(--text-dark); padding: 20px; line-height: 1.6; }
         
         #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-pink); display: flex; align-items: center; justify-content: center; z-index: 9999; }
         .login-card { background: white; padding: 40px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; width: 320px; }
         .login-card input { width: 100%; padding: 12px; margin-bottom: 20px; border: 2px solid #ffe3e3; border-radius: 10px; }
-        .login-card button { width: 100%; padding: 12px; background: var(--primary-pink); color: white; border: none; border-radius: 10px; cursor: pointer; }
+        .login-card button { width: 100%; padding: 12px; background: var(--primary-pink); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; }
 
-        .admin-content { display: none; }
+        .admin-content { display: none; max-width: 1100px; margin: 0 auto; }
         .header-banner { background: linear-gradient(135deg, #ff9aa2 0%, #ffb7b2 100%); color: white; text-align: center; padding: 30px; border-radius: 20px; margin-bottom: 25px; }
-        .admin-section { max-width: 1100px; margin: 0 auto 30px auto; background: var(--white); border-radius: 20px; padding: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .admin-section { background: var(--white); border-radius: 20px; padding: 25px; margin-bottom: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        h3 { margin-bottom: 15px; border-left: 5px solid var(--primary-pink); padding-left: 10px; }
+        
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th { background: #fff0f1; padding: 12px; border: 1px solid #ffe3e3; text-align: left; font-size: 0.9rem; }
         td { padding: 12px; border: 1px solid #ffe3e3; font-size: 0.9rem; }
+        
         .btn-delete { background: #ff6b6b; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
         .btn-action-group { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
-        .btn-action { padding: 12px 25px; border-radius: 25px; border: none; color: white; font-weight: bold; cursor: pointer; }
+        .btn-action { padding: 12px 25px; border-radius: 25px; border: none; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-action:hover { opacity: 0.9; transform: scale(1.02); }
     </style>
 </head>
 <body>
@@ -42,7 +46,7 @@
 
         <section class="admin-section">
             <h3>📈 即時模擬銷量排行</h3>
-            <ul id="admin-sales-rank" style="list-style:none;"></ul>
+            <ul id="admin-sales-rank" style="list-style:none; padding-left: 10px;"></ul>
         </section>
 
         <section class="admin-section">
@@ -59,7 +63,7 @@
 
         <section class="admin-section">
             <h3>👤 最新消費者訂單</h3>
-            <table>
+            <table id="order-table">
                 <thead><tr><th>訂單編號</th><th>時間</th><th>姓名</th><th>電話</th><th>取貨門市</th><th>商品</th><th>滿意度</th><th>操作</th></tr></thead>
                 <tbody id="admin-feedbacks-table"></tbody>
             </table>
@@ -74,9 +78,7 @@
         function checkLogin() {
             if (document.getElementById('admin-pass').value === "pet5") {
                 localStorage.setItem('isAdminLoggedIn', 'true');
-                document.getElementById('login-overlay').style.display = 'none';
-                document.getElementById('admin-content').style.display = 'block';
-                refreshDashboard();
+                location.reload();
             } else { alert("❌ 密碼錯誤！"); }
         }
 
@@ -95,8 +97,7 @@
                     canvas.height = img.height * scaleSize;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.5); 
-                    localStorage.setItem(`prod-img-${id}`, compressedBase64);
+                    localStorage.setItem(`prod-img-${id}`, canvas.toDataURL('image/jpeg', 0.5));
                     alert("✅ 圖片已儲存！");
                 };
             };
@@ -105,19 +106,14 @@
 
         function refreshDashboard() {
             const history = JSON.parse(localStorage.getItem('adminRecords') || '[]');
-            const stats = {
-                '智能自動定時餵食機': 0, 
-                '有機天然貓草深層紓壓罐頭': 0, 
-                '人體工學舒脊寵物保暖減壓床': 0
-            };
-
+            const stats = {'智能自動定時餵食機': 0, '有機天然貓草深層紓壓罐頭': 0, '人體工學舒脊寵物保暖減壓床': 0};
+            
             history.forEach(h => {
                 h.items.split(', ').forEach(item => {
                     for (let key in stats) {
                         if (item.includes(key)) {
                             const match = item.match(/x\s*(\d+)/);
-                            const qty = match ? parseInt(match[1]) : 1;
-                            stats[key] += qty;
+                            stats[key] += match ? parseInt(match[1]) : 1;
                         }
                     }
                 });
@@ -129,7 +125,7 @@
             const tableBody = document.getElementById('admin-feedbacks-table');
             tableBody.innerHTML = history.length ? history.map((fb, idx) => `
                 <tr>
-                    <td>${fb.orderId || '無編號'}</td>
+                    <td>${fb.orderId || '無'}</td>
                     <td>${fb.time || '-'}</td>
                     <td>${fb.name}</td>
                     <td>${fb.phone}</td>
@@ -141,7 +137,7 @@
         }
 
         function deleteRecord(idx) {
-            if(confirm('確定刪除？')) {
+            if(confirm('確定刪除這筆訂單嗎？')) {
                 let list = JSON.parse(localStorage.getItem('adminRecords') || '[]');
                 list.splice(idx, 1);
                 localStorage.setItem('adminRecords', JSON.stringify(list));
@@ -160,7 +156,7 @@
             link.click();
         }
 
-        function clearData() { if(confirm('確定清空？')) { localStorage.clear(); location.reload(); } }
+        function clearData() { if(confirm('確定要清空所有數據嗎？')) { localStorage.clear(); location.reload(); } }
 
         if(localStorage.getItem('isAdminLoggedIn') === 'true') {
             document.getElementById('login-overlay').style.display = 'none';
