@@ -85,15 +85,21 @@
     let cart = [];
 
     // 自動載入圖片邏輯：網頁開啟時自動抓取後台儲存的圖片
+   <script>
+    // 網頁載入時自動執行
     window.addEventListener('load', function() {
         for(let i = 0; i < 3; i++) {
+            // 從 localStorage 抓取圖片資料
             const savedImg = localStorage.getItem(`prod-img-${i}`);
             const imgElement = document.getElementById(`prod-img-${i}`);
+            
+            // 如果有存圖片，就替換掉原本的預設圖片
             if(savedImg && imgElement) {
                 imgElement.src = savedImg;
             }
         }
     });
+</script>
 
     function addItem(name, price) {
         cart.push({name, price});
