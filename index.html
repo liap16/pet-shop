@@ -23,6 +23,9 @@
         .modal-card { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 500px; max-height: 85vh; overflow-y: auto; border: 2px solid var(--primary-pink); }
         .cart-item { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px dashed #eee; }
         
+        /* 星星樣式 */
+        .star { cursor: pointer; color: #ccc; font-size: 24px; }
+        
         footer { text-align: center; padding: 30px; color: #a89292; font-size: 0.9rem; border-top: 3px dashed #ffccd0; }
     </style>
 </head>
@@ -76,7 +79,15 @@
         <input type="text" id="cust-name" placeholder="您的姓名" style="width:100%; padding:8px; margin-bottom:10px;">
         <input type="text" id="phone" placeholder="行動電話" style="width:100%; padding:8px; margin-bottom:10px;">
         <input type="text" id="store" placeholder="取貨超商門市" style="width:100%; padding:8px; margin-bottom:10px;">
-        <button onclick="checkout()" style="background:#ff9aa2; color:white; border:none; width:100%; padding:12px; border-radius:25px; cursor:pointer; margin-top:20px;">🔒 送出訂單</button>
+        
+        <p><strong>⭐ 商城滿意度評分</strong></p>
+        <div id="star-box" style="display:flex; gap:5px; margin-bottom:15px; justify-content:center;">
+            <span class="star" onclick="setStar(1)">★</span><span class="star" onclick="setStar(2)">★</span>
+            <span class="star" onclick="setStar(3)">★</span><span class="star" onclick="setStar(4)">★</span>
+            <span class="star" onclick="setStar(5)">★</span>
+        </div>
+
+        <button onclick="checkout()" style="background:#ff9aa2; color:white; border:none; width:100%; padding:12px; border-radius:25px; cursor:pointer; font-weight:bold;">🔒 送出訂單</button>
     </div>
 </div>
 
@@ -88,6 +99,12 @@
 <script>
     let cart = [];
     let currentRating = 5;
+
+    function setStar(val) {
+        currentRating = val;
+        const stars = document.querySelectorAll('.star');
+        stars.forEach((s, i) => s.style.color = i < val ? '#ffcc00' : '#ccc');
+    }
 
     window.addEventListener('load', function() {
         for(let i = 0; i < 3; i++) {
