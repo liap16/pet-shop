@@ -23,8 +23,9 @@
         .modal-card { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 500px; max-height: 85vh; overflow-y: auto; border: 2px solid var(--primary-pink); }
         .cart-item { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px dashed #eee; }
         
-        /* 星星樣式 */
+        /* 星星與數量按鈕樣式 */
         .star { cursor: pointer; color: #ccc; font-size: 24px; }
+        .qty-btn { cursor: pointer; background: #ffe3e3; border: none; border-radius: 5px; padding: 2px 8px; margin: 0 5px; }
         
         footer { text-align: center; padding: 30px; color: #a89292; font-size: 0.9rem; border-top: 3px dashed #ffccd0; }
     </style>
@@ -115,13 +116,30 @@
     });
 
     function addItem(name, price) {
-        cart.push({name, price});
+        let found = cart.find(i => i.name === name);
+        if (found) { found.qty += 1; } else { cart.push({name, price, qty: 1}); }
+        updateCart();
+    }
+
+    function updateQty(name, delta) {
+        let item = cart.find(i => i.name === name);
+        if (item) {
+            item.qty += delta;
+            if (item.qty <= 0) cart = cart.filter(i => i.name !== name);
+        }
         updateCart();
     }
     
     function updateCart() {
-        document.getElementById('cart-count').innerText = cart.length;
-        document.getElementById('cart-list').innerHTML = cart.map(i => `<div class="cart-item">${i.name} - $${i.price}</div>`).join('');
+        document.getElementById('cart-count').innerText = cart.reduce((sum, i) => sum + i.qty, 0);
+        document.getElementById('cart-list').innerHTML = cart.map(i => `
+            <div class="cart-item">
+                <span>${i.name} ($${i.price}) x ${i.qty}</span>
+                <span>
+                    <button class="qty-btn" onclick="updateQty('${i.name}', -1)">-</button>
+                    <button class="qty-btn" onclick="updateQty('${i.name}', 1)">+</button>
+                </span>
+            </div>`).join('');
     }
 
     function openCart() { document.getElementById('cart-modal').style.display = 'flex'; }
@@ -139,7 +157,7 @@
             orderId: 'ORD-' + Date.now().toString().slice(-6),
             time: new Date().toLocaleString(),
             name, phone, store,
-            items: cart.map(i => i.name).join(', '),
+            items: cart.map(i => `${i.name} x${i.qty}`).join(', '),
             rating: currentRating
         });
         localStorage.setItem('adminRecords', JSON.stringify(history));
