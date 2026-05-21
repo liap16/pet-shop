@@ -104,59 +104,53 @@
             reader.readAsDataURL(file);
         }
 
-        function refreshDashboard() {
-            const history = JSON.parse(localStorage.getItem('adminRecords') || '[]');
-            const stats = {'智能自動定時餵食機': 0, '有機天然貓草深層紓壓罐頭': 0, '人體工學舒脊寵物保暖減壓床': 0};
-            
-            history.forEach(h => {
-                h.items.split(', ').forEach(item => {
-                    for (let key in stats) {
-                        if (item.includes(key)) {
-                            const match = item.match(/x\s*(\d+)/);
-                            stats[key] += match ? parseInt(match[1]) : 1;
+        async function refreshDashboard() {
+            const url = "https://script.google.com/macros/s/AKfycbwE5K0JEIki2wY7U2tHc4VtUsPPdFWWF2FwzDPb9Dx6M8FSmOn-aX7mkeu2bnAwKhs8SA/exec";
+            try {
+                const response = await fetch(url);
+                const history = await response.json();
+                
+                const stats = {'智能自動定時餵食機': 0, '有機天然貓草深層紓壓罐頭': 0, '人體工學舒脊寵物保暖減壓床': 0};
+                history.forEach(h => {
+                    const items = h.items || "";
+                    items.split(', ').forEach(item => {
+                        for (let key in stats) {
+                            if (item.includes(key)) {
+                                const match = item.match(/x\s*(\d+)/);
+                                stats[key] += match ? parseInt(match[1]) : 1;
+                            }
                         }
-                    }
+                    });
                 });
-            });
 
-            document.getElementById('admin-sales-rank').innerHTML = Object.entries(stats)
-                .map(([n, c]) => `<li>${n}: <strong>${c} 件</strong></li>`).join('');
+                document.getElementById('admin-sales-rank').innerHTML = Object.entries(stats)
+                    .map(([n, c]) => `<li>${n}: <strong>${c} 件</strong></li>`).join('');
 
-            const tableBody = document.getElementById('admin-feedbacks-table');
-            tableBody.innerHTML = history.length ? history.map((fb, idx) => `
-                <tr>
-                    <td>${fb.orderId || '無'}</td>
-                    <td>${fb.time || '-'}</td>
-                    <td>${fb.name}</td>
-                    <td>${fb.phone}</td>
-                    <td>${fb.store || '-'}</td>
-                    <td>${fb.items}</td>
-                    <td>${fb.rating} 星</td>
-                    <td><button class="btn-delete" onclick="deleteRecord(${idx})">❌ 刪除</button></td>
-                </tr>`).join('') : '<tr><td colspan="8" style="text-align:center;">尚無訂單資料</td></tr>';
-        }
-
-        function deleteRecord(idx) {
-            if(confirm('確定刪除這筆訂單嗎？')) {
-                let list = JSON.parse(localStorage.getItem('adminRecords') || '[]');
-                list.splice(idx, 1);
-                localStorage.setItem('adminRecords', JSON.stringify(list));
-                refreshDashboard();
+                const tableBody = document.getElementById('admin-feedbacks-table');
+                tableBody.innerHTML = history.length ? history.map((fb) => `
+                    <tr>
+                        <td>${fb.orderId || '無'}</td>
+                        <td>${fb.time || '-'}</td>
+                        <td>${fb.name}</td>
+                        <td>${fb.phone}</td>
+                        <td>${fb.store || '-'}</td>
+                        <td>${fb.items}</td>
+                        <td>${fb.rating} 星</td>
+                        <td>雲端同步中</td>
+                    </tr>`).join('') : '<tr><td colspan="8" style="text-align:center;">尚無訂單資料</td></tr>';
+            } catch (error) {
+                console.error("同步失敗:", error);
+                document.getElementById('admin-feedbacks-table').innerHTML = '<tr><td colspan="8" style="text-align:center; color:red;">無法讀取雲端資料，請檢查 Google Sheet 設定</td></tr>';
             }
         }
 
+        function deleteRecord(idx) { alert("請前往 Google Sheet 後台刪除訂單以確保資料同步。"); }
+
         function exportToExcel() {
-            let csv = "\ufeff訂單編號,時間,姓名,電話,取貨門市,商品,滿意度\n";
-            JSON.parse(localStorage.getItem('adminRecords') || '[]').forEach(fb => { 
-                csv += `${fb.orderId || '無'},${fb.time},${fb.name},${fb.phone},${fb.store},"${fb.items}",${fb.rating}\n`; 
-            });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
-            link.download = "訂單報表.csv";
-            link.click();
+            alert("請直接下載 Google Sheet 檔案進行匯出。");
         }
 
-        function clearData() { if(confirm('確定要清空所有數據嗎？')) { localStorage.clear(); location.reload(); } }
+        function clearData() { alert("為保護資料安全，請直接在 Google Sheet 中清空資料。"); }
 
         if(localStorage.getItem('isAdminLoggedIn') === 'true') {
             document.getElementById('login-overlay').style.display = 'none';
