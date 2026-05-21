@@ -2,46 +2,52 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>寵物嚴選商城 - 管理後台</title>
     <style>
-        :root { --primary-pink: #ff9aa2; --bg-pink: #fff5f5; }
-        body { background-color: var(--bg-pink); font-family: sans-serif; }
-        #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-pink); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-        .login-card { background: white; padding: 40px; border-radius: 25px; text-align: center; width: 320px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        .login-card input { width: 100%; padding: 12px; margin-bottom: 20px; border: 2px solid #ffe3e3; border-radius: 10px; }
-        .login-card button { width: 100%; padding: 12px; background: var(--primary-pink); color: white; border: none; border-radius: 10px; cursor: pointer; }
-        .admin-content { display: none; padding: 20px; }
+        body { font-family: sans-serif; padding: 20px; background: #fff5f5; }
+        .admin-content { display: none; } /* 預設隱藏 */
+        .section { background: white; padding: 20px; margin-bottom: 20px; border-radius: 15px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
     </style>
 </head>
 <body>
 
     <div id="login-overlay">
-        <div class="login-card">
-            <h2>管理員登入</h2>
-            <input type="password" id="admin-pass" placeholder="請輸入管理密碼">
-            <button onclick="checkLogin()">進入後台</button>
-        </div>
+        <h2>管理員登入</h2>
+        <input type="password" id="admin-pass" placeholder="請輸入密碼">
+        <button onclick="checkLogin()">進入後台</button>
     </div>
 
     <div class="admin-content" id="admin-content">
-        <h1>🎀 管理後台已開啟 🎀</h1>
+        <h1>🎀 管理後台 🎀</h1>
         <button onclick="logout()">登出</button>
+
+        <div class="section">
+            <h3>📈 即時模擬銷量排行</h3>
+            <ul id="admin-sales-rank"></ul>
+        </div>
+
+        <div class="section">
+            <h3>👤 最新消費者訂單</h3>
+            <table>
+                <thead>
+                    <tr><th>訂單編號</th><th>時間</th><th>商品</th><th>操作</th></tr>
+                </thead>
+                <tbody id="admin-feedbacks-table"></tbody>
+            </table>
+        </div>
     </div>
 
     <script>
+        // 核心檢查函式
         function checkLogin() {
-            const inputVal = document.getElementById('admin-pass').value;
-            console.log("輸入的密碼為:", inputVal); // 若無法執行，請查看 F12 主控台
-            
-            if (inputVal === "pet5") {
+            const pass = document.getElementById('admin-pass').value;
+            if (pass === "pet5") {
                 localStorage.setItem('isAdminLoggedIn', 'true');
-                document.getElementById('login-overlay').style.display = 'none';
-                document.getElementById('admin-content').style.display = 'block';
-                alert("登入成功！");
-                location.reload(); 
+                location.reload();
             } else {
-                alert("❌ 密碼錯誤，請重新輸入。您輸入的是: " + inputVal);
+                alert("密碼錯誤");
             }
         }
 
@@ -50,10 +56,39 @@
             location.reload();
         }
 
-        // 檢查登入狀態
-        if(localStorage.getItem('isAdminLoggedIn') === 'true') {
-            document.getElementById('login-overlay').style.display = 'none';
-            document.getElementById('admin-content').style.display = 'block';
+        // 初始化顯示
+        window.onload = function() {
+            if(localStorage.getItem('isAdminLoggedIn') === 'true') {
+                document.getElementById('login-overlay').style.display = 'none';
+                document.getElementById('admin-content').style.display = 'block';
+                renderDashboard();
+            }
+        };
+
+        function renderDashboard() {
+            const records = JSON.parse(localStorage.getItem('adminRecords') || '[]');
+            const tableBody = document.getElementById('admin-feedbacks-table');
+            
+            if (records.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="4">尚無訂單</td></tr>';
+                return;
+            }
+
+            tableBody.innerHTML = records.map((r, i) => `
+                <tr>
+                    <td>${r.orderId || '-'}</td>
+                    <td>${r.time || '-'}</td>
+                    <td>${r.items || '-'}</td>
+                    <td><button onclick="deleteRow(${i})">刪除</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function deleteRow(index) {
+            let records = JSON.parse(localStorage.getItem('adminRecords') || '[]');
+            records.splice(index, 1);
+            localStorage.setItem('adminRecords', JSON.stringify(records));
+            renderDashboard();
         }
     </script>
 </body>
