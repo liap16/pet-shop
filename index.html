@@ -97,7 +97,7 @@
             <span class="star" onclick="setStar(5)">★</span>
         </div>
 
-        <button onclick="checkout()" style="background:#ff9aa2; color:white; border:none; width:100%; padding:12px; border-radius:25px; cursor:pointer; font-weight:bold;">🔒 送出訂單</button>
+        <button id="checkout-btn" onclick="checkout()" style="background:#ff9aa2; color:white; border:none; width:100%; padding:12px; border-radius:25px; cursor:pointer; font-weight:bold;">🔒 送出訂單</button>
     </div>
 </div>
 
@@ -109,6 +109,7 @@
 <script>
     let cart = [];
     let currentRating = 5;
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxUw5ySvOa8RHyDrOCmrVz6u1KEnAe5awOZUkobVbItPinhxUxb6Nh2W2sKnv83QtJ2MQ/exec";
 
     function setStar(val) {
         currentRating = val;
@@ -122,6 +123,7 @@
             const imgElement = document.getElementById(`prod-img-${i}`);
             if(savedImg && imgElement) imgElement.src = savedImg;
         }
+        setStar(5);
     });
 
     function addItem(name, price) {
@@ -154,30 +156,47 @@
     function openCart() { document.getElementById('cart-modal').style.display = 'flex'; }
     function closeCart() { document.getElementById('cart-modal').style.display = 'none'; }
     
-    function checkout() {
+    async function checkout() {
         if (cart.length === 0) return alert("購物車空的喔！");
         const name = document.getElementById('cust-name').value;
         const phone = document.getElementById('phone').value;
         const store = document.getElementById('store').value;
-        
-        // 抓取回饋資料
         const selected = [];
         document.querySelectorAll('input[name="feedback-opt"]:checked').forEach(cb => selected.push(cb.value));
         const extra = document.getElementById('feedback-text').value;
 
         if (!name || !phone) return alert("請填寫姓名與電話");
 
-        let history = JSON.parse(localStorage.getItem('adminRecords') || '[]');
-        history.push({
+        const btn = document.getElementById('checkout-btn');
+        btn.innerText = "處理中...";
+        btn.disabled = true;
+
+        const orderData = {
             orderId: 'ORD-' + Date.now().toString().slice(-6),
             time: new Date().toLocaleString(),
             name, phone, store,
             items: cart.map(i => `${i.name} x${i.qty}`).join(', '),
             rating: currentRating,
             feedback: selected.join(', ') + (extra ? ' | 備註: ' + extra : '')
-        });
-        localStorage.setItem('adminRecords', JSON.stringify(history));
-        window.location.href = 'https://docs.google.com/forms/d/e/1FAIpQLScWpoZ3KMdeT7jvcpKClma9NzkCTzEttUje-GUgHios86C6gQ/viewform?usp=header';
+        };
+
+        try {
+            await fetch(SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(orderData)
+            });
+            alert("✅ 訂單已成功送出！");
+            cart = [];
+            updateCart();
+            closeCart();
+        } catch (e) {
+            alert("送出失敗，請確認網路連線。");
+        } finally {
+            btn.innerText = "🔒 送出訂單";
+            btn.disabled = false;
+        }
     }
 </script>
 </body>
