@@ -23,7 +23,6 @@
         th { background: #fff0f1; padding: 12px; border: 1px solid #ffe3e3; text-align: left; font-size: 0.9rem; }
         td { padding: 12px; border: 1px solid #ffe3e3; font-size: 0.9rem; }
         
-        .btn-delete { background: #ff6b6b; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
         .btn-action-group { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
         .btn-action { padding: 12px 25px; border-radius: 25px; border: none; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; }
         .btn-action:hover { opacity: 0.9; transform: scale(1.02); }
@@ -76,10 +75,13 @@
 
     <script>
         function checkLogin() {
+            // 密碼驗證邏輯
             if (document.getElementById('admin-pass').value === "pet5") {
                 localStorage.setItem('isAdminLoggedIn', 'true');
                 location.reload();
-            } else { alert("❌ 密碼錯誤！"); }
+            } else { 
+                alert("❌ 密碼錯誤！"); 
+            }
         }
 
         function uploadImage(id, input) {
@@ -143,7 +145,7 @@
                             <td>雲端同步中</td>
                         </tr>`).join('');
                 } else {
-                    tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;">尚無訂單資料</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;">目前無訂單資料</td></tr>';
                 }
             } catch (error) {
                 console.error("同步失敗:", error);
@@ -154,6 +156,7 @@
         function exportToExcel() { alert("請直接下載 Google Sheet 檔案進行匯出。"); }
         function clearData() { alert("為保護資料安全，請直接在 Google Sheet 中清空資料。"); }
 
+        // 初始化檢查：如果登入過就直接顯示
         if(localStorage.getItem('isAdminLoggedIn') === 'true') {
             document.getElementById('login-overlay').style.display = 'none';
             document.getElementById('admin-content').style.display = 'block';
