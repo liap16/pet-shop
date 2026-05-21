@@ -77,6 +77,11 @@
                 if(savedImg) {
                     const preview = document.getElementById(`preview-${i}`);
                     if(preview) preview.src = savedImg;
+                    <div class="admin-section" style="text-align:center;">
+    <button onclick="localStorage.removeItem('isAdminLoggedIn'); location.reload();" style="background:#ccc; border:none; padding:10px; border-radius:10px;">
+        🔄 若無法登入，點此重置登入狀態
+    </button>
+</div>
                 }
             }
         });
