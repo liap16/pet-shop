@@ -67,6 +67,9 @@
                 <button class="btn-action" style="background:#4ecdc4" onclick="exportToExcel()">📊 匯出訂單</button>
                 <button class="btn-action" style="background:#ff6b6b" onclick="clearData()">重設所有數據</button>
             </div>
+            <div style="margin-top:20px; text-align:center;">
+                <button onclick="localStorage.removeItem('isAdminLoggedIn'); location.reload();" style="background:#ccc; border:none; padding:10px; border-radius:10px; cursor:pointer;">🔄 若無法登入，點此重置狀態</button>
+            </div>
         </section>
     </div>
 
@@ -77,7 +80,6 @@
                 if(savedImg) {
                     const preview = document.getElementById(`preview-${i}`);
                     if(preview) preview.src = savedImg;
-                    <div class="admin-section" style="text-align:center;">
                 }
             }
         });
@@ -115,51 +117,23 @@
             reader.readAsDataURL(file);
         }
 
-      function refreshDashboard() {
-    // 1. 取得所有訂單
-    const history = JSON.parse(localStorage.getItem('adminRecords') || '[]');
-    
-    // 2. 初始化統計物件
-    const stats = {
-        '智能自動定時餵食機': 0,
-        '有機天然貓草深層紓壓罐頭': 0,
-        '人體工學舒脊寵物保暖減壓床': 0
-    };
+        function refreshDashboard() {
+            const history = JSON.parse(localStorage.getItem('adminRecords') || '[]');
+            const stats = {
+                '智能自動定時餵食機': 0,
+                '有機天然貓草深層紓壓罐頭': 0,
+                '人體工學舒脊寵物保暖減壓床': 0
+            };
 
-    // 3. 遍歷每筆訂單進行累加
-    history.forEach(h => {
-        // 如果商品欄位有多個商品，用逗號拆開
-        const items = h.items.split(', ');
-        items.forEach(item => {
-            // 將 "商品名稱 x數量" 拆開成名稱與數字
-            const parts = item.split(' x');
-            const name = parts[0];
-            const qty = parseInt(parts[1] || 1); // 如果沒有 x數字，預設為1
-            
-            if (stats.hasOwnProperty(name)) {
-                stats[name] += qty;
-            }
-        });
-    });
-
-    // 4. 更新銷量排行的 HTML
-    document.getElementById('admin-sales-rank').innerHTML = Object.entries(stats)
-        .map(([n, c]) => `<li>${n}: <strong>${c} 件</strong></li>`).join('');
-
-    // 5. 更新訂單列表表格
-    const tableBody = document.getElementById('admin-feedbacks-table');
-    tableBody.innerHTML = history.length ? history.map((fb, idx) => `
-        <tr>
-            <td>${fb.orderId || '無編號'}</td>
-            <td>${fb.time || '-'}</td>
-            <td>${fb.name}</td>
-            <td>${fb.phone}</td>
-            <td>${fb.store || '-'}</td>
-            <td>${fb.items}</td>
-            <td>${fb.rating} 星</td>
-            <td><button class="btn-delete" onclick="deleteRecord(${idx})">❌ 刪除</button></td>
-        </tr>`).join('') : '<tr><td colspan="8" style="text-align:center;">尚無訂單資料</td></tr>';
-}
+            history.forEach(h => {
+                const items = h.items.split(', ');
+                items.forEach(item => {
+                    const parts = item.split(' x');
+                    const name = parts[0];
+                    const qty = parseInt(parts[1] || 1);
+                    if (stats.hasOwnProperty(name)) {
+                        stats[name] += qty;
+                    }
                 });
             });
 
