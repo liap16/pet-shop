@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>寵物嚴選商城 - 核心控制後台</title>
+    <style>
+        :root { --primary-pink: #ff9aa2; --bg-pink: #fff5f5; --white: #ffffff; --text-dark: #6d5959; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'PingFang TC', sans-serif; }
+        body { background-color: var(--bg-pink); color: var(--text-dark); padding: 20px; }
+        
+        #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-pink); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .login-card { background: white; padding: 40px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; width: 320px; }
+        .login-card input { width: 100%; padding: 12px; margin-bottom: 20px; border: 2px solid #ffe3e3; border-radius: 10px; }
+        .login-card button { width: 100%; padding: 12px; background: var(--primary-pink); color: white; border: none; border-radius: 10px; cursor: pointer; }
+
+        .admin-content { display: none; }
+        .header-banner { background: linear-gradient(135deg, #ff9aa2 0%, #ffb7b2 100%); color: white; text-align: center; padding: 30px; border-radius: 20px; margin-bottom: 25px; }
+        .admin-section { max-width: 1100px; margin: 0 auto 30px auto; background: var(--white); border-radius: 20px; padding: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background: #fff0f1; padding: 12px; border: 1px solid #ffe3e3; text-align: left; font-size: 0.9rem; }
+        td { padding: 12px; border: 1px solid #ffe3e3; font-size: 0.9rem; }
+        .btn-delete { background: #ff6b6b; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+        .btn-action-group { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
+        .btn-action { padding: 12px 25px; border-radius: 25px; border: none; color: white; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div id="login-overlay">
+        <div class="login-card">
+            <h2>管理員登入</h2>
+            <input type="password" id="admin-pass" placeholder="請輸入管理密碼">
+            <button onclick="checkLogin()">進入後台</button>
+        </div>
+    </div>
+
+    <div class="admin-content" id="admin-content">
+        <header class="header-banner">
+            <h1>🎀 寵物嚴選商城 管理後台 🎀</h1>
+        </header>
+
+        <section class="admin-section">
+            <h3>📈 即時模擬銷量排行</h3>
+            <ul id="admin-sales-rank" style="list-style:none;"></ul>
+        </section>
+
+        <section class="admin-section">
+            <h3>🖼️ 商品圖片管理</h3>
+            <table>
+                <thead><tr><th>商品名稱</th><th>更換圖片</th></tr></thead>
+                <tbody>
+                    <tr><td>智能自動定時餵食機</td><td><input type="file" accept="image/*" onchange="uploadImage(0, this)"></td></tr>
+                    <tr><td>有機天然貓草深層紓壓罐頭</td><td><input type="file" accept="image/*" onchange="uploadImage(1, this)"></td></tr>
+                    <tr><td>人體工學舒脊寵物保暖減壓床</td><td><input type="file" accept="image/*" onchange="uploadImage(2, this)"></td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="admin-section">
+            <h3>👤 最新消費者訂單</h3>
+            <table>
+                <thead><tr><th>訂單編號</th><th>時間</th><th>姓名</th><th>電話</th><th>取貨門市</th><th>商品</th><th>滿意度</th><th>操作</th></tr></thead>
+                <tbody id="admin-feedbacks-table"></tbody>
+            </table>
+            <div class="btn-action-group">
+                <button class="btn-action" style="background:#4ecdc4" onclick="exportToExcel()">📊 匯出訂單</button>
+                <button class="btn-action" style="background:#ff6b6b" onclick="clearData()">重設所有數據</button>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        function checkLogin() {
+            if (document.getElementById('admin-pass').value === "pet5") {
+                localStorage.setItem('isAdminLoggedIn', 'true');
+                document.getElementById('login-overlay').style.display = 'none';
+                document.getElementById('admin-content').style.display = 'block';
+                refreshDashboard();
+            } else { alert("❌ 密碼錯誤！"); }
+        }
+
+        function uploadImage(id, input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 300; 
+                    const scaleSize = MAX_WIDTH / img.width;
+                    canvas.width = MAX_WIDTH;
+                    canvas.height = img.height * scaleSize;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.5); 
+                    localStorage.setItem(`prod-img-${id}`, compressedBase64);
+                    alert("✅ 圖片已儲存！");
+                };
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function refreshDashboard() {
+            const history = JSON.parse(localStorage.getItem('adminRecords') || '[]');
+            
+            const stats = {'智能自動定時餵食機': 0, '有機天然貓草深層紓壓罐頭': 0, '人體工學舒脊寵物保暖減壓床': 0};
+            history.forEach(h => {
+                h.items.split(', ').forEach(item => { if(stats.hasOwnProperty(item)) stats[item]++; });
+            });
+            document.getElementById('admin-sales-rank').innerHTML = Object.entries(stats).map(([n, c]) => `<li>${n}: <strong>${c} 件</strong></li>`).join('');
+
+            const tableBody = document.getElementById('admin-feedbacks-table');
+            tableBody.innerHTML = history.length ? history.map((fb, idx) => `
+                <tr>
+                    <td>${fb.orderId || '無編號'}</td>
+                    <td>${fb.time || '-'}</td>
+                    <td>${fb.name}</td>
+                    <td>${fb.phone}</td>
+                    <td>${fb.store || '-'}</td>
+                    <td>${fb.items}</td>
+                    <td>${fb.rating} 星</td>
+                    <td><button class="btn-delete" onclick="deleteRecord(${idx})">❌ 刪除</button></td>
+                </tr>`).join('') : '<tr><td colspan="8" style="text-align:center;">尚無訂單資料</td></tr>';
+        }
+
+        function deleteRecord(idx) {
+            if(confirm('確定刪除？')) {
+                let list = JSON.parse(localStorage.getItem('adminRecords') || '[]');
+                list.splice(idx, 1);
+                localStorage.setItem('adminRecords', JSON.stringify(list));
+                refreshDashboard();
+            }
+        }
+
+        function exportToExcel() {
+            let csv = "\ufeff訂單編號,時間,姓名,電話,取貨門市,商品,滿意度\n";
+            JSON.parse(localStorage.getItem('adminRecords') || '[]').forEach(fb => { 
+                csv += `${fb.orderId || '無'},${fb.time},${fb.name},${fb.phone},${fb.store},"${fb.items}",${fb.rating}\n`; 
+            });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+            link.download = "訂單報表.csv";
+            link.click();
+        }
+
+        function clearData() { if(confirm('確定清空？')) { localStorage.clear(); location.reload(); } }
+
+        if(localStorage.getItem('isAdminLoggedIn') === 'true') {
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('admin-content').style.display = 'block';
+            refreshDashboard();
+        }
+    </script>
+</body>
+</html>
