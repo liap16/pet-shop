@@ -81,6 +81,15 @@
         <input type="text" id="phone" placeholder="行動電話" style="width:100%; padding:8px; margin-bottom:10px;">
         <input type="text" id="store" placeholder="取貨超商門市" style="width:100%; padding:8px; margin-bottom:10px;">
         
+        <p><strong>📝 購物體驗回饋 (可多選)</strong></p>
+        <div style="text-align: left; margin-bottom: 10px;">
+            <label><input type="checkbox" name="feedback-opt" value="價格合理"> 價格合理</label><br>
+            <label><input type="checkbox" name="feedback-opt" value="介面美觀"> 介面美觀</label><br>
+            <label><input type="checkbox" name="feedback-opt" value="操作流暢"> 操作流暢</label><br>
+            <label><input type="checkbox" name="feedback-opt" value="商品齊全"> 商品齊全</label>
+        </div>
+        <textarea id="feedback-text" placeholder="其他建議..." style="width:100%; height:60px; margin-bottom:10px;"></textarea>
+
         <p><strong>⭐ 商城滿意度評分</strong></p>
         <div id="star-box" style="display:flex; gap:5px; margin-bottom:15px; justify-content:center;">
             <span class="star" onclick="setStar(1)">★</span><span class="star" onclick="setStar(2)">★</span>
@@ -150,6 +159,12 @@
         const name = document.getElementById('cust-name').value;
         const phone = document.getElementById('phone').value;
         const store = document.getElementById('store').value;
+        
+        // 抓取回饋資料
+        const selected = [];
+        document.querySelectorAll('input[name="feedback-opt"]:checked').forEach(cb => selected.push(cb.value));
+        const extra = document.getElementById('feedback-text').value;
+
         if (!name || !phone) return alert("請填寫姓名與電話");
 
         let history = JSON.parse(localStorage.getItem('adminRecords') || '[]');
@@ -158,7 +173,8 @@
             time: new Date().toLocaleString(),
             name, phone, store,
             items: cart.map(i => `${i.name} x${i.qty}`).join(', '),
-            rating: currentRating
+            rating: currentRating,
+            feedback: selected.join(', ') + (extra ? ' | 備註: ' + extra : '')
         });
         localStorage.setItem('adminRecords', JSON.stringify(history));
         window.location.href = 'https://docs.google.com/forms/d/e/1FAIpQLScWpoZ3KMdeT7jvcpKClma9NzkCTzEttUje-GUgHios86C6gQ/viewform?usp=header';
