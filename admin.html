@@ -71,7 +71,6 @@
     </div>
 
     <script>
-        // 頁面載入時，自動從 localStorage 讀取並顯示已設定的圖片
         window.addEventListener('load', function() {
             for(let i = 0; i < 3; i++) {
                 const savedImg = localStorage.getItem(`prod-img-${i}`);
@@ -108,8 +107,6 @@
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     const compressedBase64 = canvas.toDataURL('image/jpeg', 0.5); 
                     localStorage.setItem(`prod-img-${id}`, compressedBase64);
-                    
-                    // 更新預覽
                     document.getElementById(`preview-${id}`).src = compressedBase64;
                     alert("✅ 圖片已儲存並更新預覽！");
                 };
@@ -119,11 +116,25 @@
 
         function refreshDashboard() {
             const history = JSON.parse(localStorage.getItem('adminRecords') || '[]');
-            const stats = {'智能自動定時餵食機': 0, '有機天然貓草深層紓壓罐頭': 0, '人體工學舒脊寵物保暖減壓床': 0};
+            const stats = {
+                '智能自動定時餵食機': 0, 
+                '有機天然貓草深層紓壓罐頭': 0, 
+                '人體工學舒脊寵物保暖減壓床': 0
+            };
+            
             history.forEach(h => {
-                h.items.split(', ').forEach(item => { if(stats.hasOwnProperty(item)) stats[item]++; });
+                h.items.split(', ').forEach(itemStr => {
+                    const parts = itemStr.split(' x');
+                    const name = parts[0];
+                    const qty = parseInt(parts[1] || 1);
+                    if (stats.hasOwnProperty(name)) {
+                        stats[name] += qty;
+                    }
+                });
             });
-            document.getElementById('admin-sales-rank').innerHTML = Object.entries(stats).map(([n, c]) => `<li>${n}: <strong>${c} 件</strong></li>`).join('');
+
+            document.getElementById('admin-sales-rank').innerHTML = Object.entries(stats)
+                .map(([n, c]) => `<li>${n}: <strong>${c} 件</strong></li>`).join('');
 
             const tableBody = document.getElementById('admin-feedbacks-table');
             tableBody.innerHTML = history.length ? history.map((fb, idx) => `
