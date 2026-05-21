@@ -22,10 +22,8 @@
         .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); display:none; justify-content:center; align-items:center; z-index:1000; }
         .modal-card { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 500px; max-height: 85vh; overflow-y: auto; border: 2px solid var(--primary-pink); }
         .cart-item { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px dashed #eee; }
-        .star { cursor:pointer; color:#ccc; font-size:1.8rem; }
-        .star.active { color:#ffd166; }
+        
         footer { text-align: center; padding: 30px; color: #a89292; font-size: 0.9rem; border-top: 3px dashed #ffccd0; }
-        .checkbox-group { text-align: left; margin: 15px 0; }
     </style>
 </head>
 <body>
@@ -74,27 +72,7 @@
         <span onclick="closeCart()" style="float:right; cursor:pointer; font-size:24px;">&times;</span>
         <h2>🛒 您的訂單</h2>
         <div id="cart-list"></div>
-        
-        <input type="text" id="name" placeholder="購買人姓名" style="width:100%; padding:8px; margin:10px 0;">
-        <input type="text" id="phone" placeholder="行動電話" style="width:100%; padding:8px; margin-bottom:10px;">
-        <input type="text" id="store" placeholder="取貨超商門市" style="width:100%; padding:8px; margin-bottom:10px;">
-        
-        <p><strong>📝 購物體驗回饋 (可多選)</strong></p>
-        <div class="checkbox-group">
-            <label><input type="checkbox" name="feedback-opt" value="價格合理"> 價格合理</label><br>
-            <label><input type="checkbox" name="feedback-opt" value="介面美觀"> 介面美觀</label><br>
-            <label><input type="checkbox" name="feedback-opt" value="操作流暢"> 操作流暢</label><br>
-            <label><input type="checkbox" name="feedback-opt" value="商品齊全"> 商品齊全</label>
-        </div>
-        <textarea id="feedback-text" placeholder="其他建議..." style="width:90%; height:60px; margin-bottom:10px;"></textarea>
-        
-        <p><strong>⭐ 商城滿意度評分</strong></p>
-        <div id="star-box" style="display:flex; gap:5px; margin-bottom:15px; justify-content:center;">
-            <span class="star" onclick="setStar(1)">★</span><span class="star" onclick="setStar(2)">★</span>
-            <span class="star" onclick="setStar(3)">★</span><span class="star" onclick="setStar(4)">★</span>
-            <span class="star" onclick="setStar(5)">★</span>
-        </div>
-        <button onclick="checkout()" style="background:#ff9aa2; color:white; border:none; width:100%; padding:12px; border-radius:25px; cursor:pointer; font-weight:bold;">🔒 送出訂單</button>
+        <button onclick="checkout()" style="background:#ff9aa2; color:white; border:none; width:100%; padding:12px; border-radius:25px; cursor:pointer; margin-top:20px;">🔒 送出訂單</button>
     </div>
 </div>
 
@@ -104,65 +82,35 @@
 </footer>
 
 <script>
-    let cart = [], stars = 0;
+    let cart = [];
+
+    // 自動載入圖片邏輯：網頁開啟時自動抓取後台儲存的圖片
+    window.addEventListener('load', function() {
+        for(let i = 0; i < 3; i++) {
+            const savedImg = localStorage.getItem(`prod-img-${i}`);
+            const imgElement = document.getElementById(`prod-img-${i}`);
+            if(savedImg && imgElement) {
+                imgElement.src = savedImg;
+            }
+        }
+    });
+
     function addItem(name, price) {
-        let item = cart.find(i => i.name === name);
-        if(item) item.qty++; else cart.push({name, price, qty: 1});
+        cart.push({name, price});
         updateCart();
     }
+    
     function updateCart() {
-        document.getElementById('cart-count').innerText = cart.reduce((a, b) => a + b.qty, 0);
-        document.getElementById('cart-list').innerHTML = cart.map((i, idx) => `
-            <div class="cart-item">
-                <span>${i.name} (x${i.qty})</span>
-                <button onclick="cart.splice(${idx}, 1); updateCart()" style="color:red; border:none; background:none; cursor:pointer;">刪除</button>
-            </div>`).join('');
+        document.getElementById('cart-count').innerText = cart.length;
+        document.getElementById('cart-list').innerHTML = cart.map(i => `<div>${i.name}</div>`).join('');
     }
-    function setStar(n) { 
-        stars = n; 
-        document.querySelectorAll('.star').forEach((s, i) => s.className = i < n ? 'star active' : 'star');
-    }
+
     function openCart() { document.getElementById('cart-modal').style.display = 'flex'; }
     function closeCart() { document.getElementById('cart-modal').style.display = 'none'; }
     
     function checkout() {
-        const name = document.getElementById('name').value;
-        const phone = document.getElementById('phone').value;
-        const store = document.getElementById('store').value;
-        
-        if(cart.length === 0) { alert('購物車是空的！'); return; }
-        if(!name || stars === 0) { alert('請完整填寫姓名並進行評分！'); return; }
-        
-        const selected = [];
-        document.querySelectorAll('input[name="feedback-opt"]:checked').forEach(cb => selected.push(cb.value));
-        const extra = document.getElementById('feedback-text').value;
-
-        // 生成訂單編號
-        const orderId = 'PET' + Date.now().toString().slice(-6);
-
-        const record = { 
-            orderId, // 存入訂單編號
-            name, 
-            phone, 
-            store,
-            items: cart.map(i => i.name).join(', '), 
-            rating: stars, 
-            feedback: selected.join(', ') + (extra ? ' | 備註: ' + extra : ''),
-            time: new Date().toLocaleString() 
-        };
-        
-        let history = JSON.parse(localStorage.getItem('adminRecords') || '[]');
-        history.push(record);
-        localStorage.setItem('adminRecords', JSON.stringify(history));
-        
-        // 顯示彈窗提示
-        const confirmed = confirm("✅ 已收到您的訂單資料！\n訂單編號：" + orderId + "\n\n為了完成正式登記，接下來將轉跳至「訂單確認表單」。\n請確認資訊正確並送出。");
-        
-        if (confirmed) {
-            window.location.href = 'https://docs.google.com/forms/d/e/1FAIpQLScWpoZ3KMdeT7jvcpKClma9NzkCTzEttUje-GUgHios86C6gQ/viewform?usp=header';
-        }
+        window.location.href = 'https://docs.google.com/forms/d/e/1FAIpQLScWpoZ3KMdeT7jvcpKClma9NzkCTzEttUje-GUgHios86C6gQ/viewform?usp=header';
     }
-
-  window.addEventListener('load', function() {
-    const images = [
-        "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5OjcBCgoKDQwNGg8PGjclHyU3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3N//AABEIAMgA+gMBIgACEQEDEQH/xAAcAAABBQEBAQAAAAAAAAAAAAAEAQIDBQYABwj/xABBEAACAQIEAwUFBgUCBQUBAAABAgMAEQQSITEFQVETImFxgQYykaGxFEJSwdHwBxUjYuFDchYkM4KSU1SiwvE0/8QAGQEAAwEBAQAAAAAAAAAAAAAAAAECBAMF/8QAJBEAAgICAgICAgMAAAAAAAAAAAECEQMxEiEEQRNRIjIUYXH/2gAMAwEAAhEDEQA/AG/woseJyRH7zyL8UNeewRHInIgC1egfw0/5bi80rmyxOzMTyCqSfpWch4cWRSF1I00rJJ9GyK7ZWRxkaOtvGi/5fIBmC2q0i4cx0ZdOd6ssLgJIBcDPHzU7iubkdaKOHAXGpv0tRkGAYW7ptWmw/C4Zkz4cgHmp0I86NiwWSyvHl89jUti6M9BwwsAMoBPLkaOh4SOhDdD+9av48ECO6P8AtPOi4cKCArrceI1H60g5FLDw0AaqCOen1qf+VLb+mAPA1dDDZSAd/uPyPgamGGI1Wwbmp0+tKhcimiwpQAEXHTmKMTDqde6ejVYdkp7rrlNL2Rja6nffTQ0UFgS4XKbqMp6danSNTa4ykfCjFZQLMtvoacUBFFCsgmXLLEOiL9KPi95fKgsSLTRgbZV+lGxe8vlXoR0jG9hK08UxaeKoQ4U4+4aaKcfcb
+</script>
+</body>
+</html>
