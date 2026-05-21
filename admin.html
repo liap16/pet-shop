@@ -111,14 +111,19 @@
                 const response = await fetch(url);
                 const history = await response.json();
                 
-                const stats = {'智能自動定時餵食機': 0, '有機天然貓草深層紓壓罐頭': 0, '人體工學舒脊寵物保暖減壓床': 0};
+                const stats = {
+                    '智能自動定時餵食機': 0, 
+                    '有機天然貓草深層紓壓罐頭': 0, 
+                    '人體工學舒脊寵物保暖減壓床': 0
+                };
                 
                 if (Array.isArray(history)) {
                     history.forEach(fb => {
                         const items = fb.items || "";
                         for (let key in stats) {
                             if (items.includes(key)) {
-                                const match = items.match(/x\s*(\d+)/);
+                                const regex = new RegExp(key + ".*x\\s*(\\d+)", "i");
+                                const match = items.match(regex);
                                 stats[key] += match ? parseInt(match[1]) : 1;
                             }
                         }
