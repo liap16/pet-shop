@@ -104,24 +104,57 @@
             reader.readAsDataURL(file);
         }
 
-        async function refreshDashboard() {
+       async function refreshDashboard() {
             const url = "https://script.google.com/macros/s/AKfycbwE5K0JEIki2wY7U2tHc4VtUsPPdFWWF2FwzDPb9Dx6M8FSmOn-aX7mkeu2bnAwKhs8SA/exec";
+            
             try {
                 const response = await fetch(url);
                 const history = await response.json();
                 
+                // 1. 計算銷量排行
                 const stats = {'智能自動定時餵食機': 0, '有機天然貓草深層紓壓罐頭': 0, '人體工學舒脊寵物保暖減壓床': 0};
-                history.forEach(h => {
-                    const items = h.items || "";
-                    items.split(', ').forEach(item => {
-                        for (let key in stats) {
-                            if (item.includes(key)) {
-                                const match = item.match(/x\s*(\d+)/);
-                                stats[key] += match ? parseInt(match[1]) : 1;
+                
+                if (Array.isArray(history)) {
+                    history.forEach(h => {
+                        const items = h.items || "";
+                        items.split(', ').forEach(item => {
+                            for (let key in stats) {
+                                if (item.includes(key)) {
+                                    const match = item.match(/x\s*(\d+)/);
+                                    stats[key] += match ? parseInt(match[1]) : 1;
+                                }
                             }
-                        }
+                        });
                     });
-                });
+                }
+
+                document.getElementById('admin-sales-rank').innerHTML = Object.entries(stats)
+                    .map(([n, c]) => `<li>${n}: <strong>${c} 件</strong></li>`).join('');
+
+                // 2. 顯示訂單表格
+                const tableBody = document.getElementById('admin-feedbacks-table');
+                if (Array.isArray(history) && history.length > 0) {
+                    tableBody.innerHTML = history.map((fb) => `
+                        <tr>
+                            <td>${fb.orderId || '無'}</td>
+                            <td>${fb.time || '-'}</td>
+                            <td>${fb.name || '-'}</td>
+                            <td>${fb.phone || '-'}</td>
+                            <td>${fb.store || '-'}</td>
+                            <td>${fb.items || '-'}</td>
+                            <td>${fb.rating || 0} 星</td>
+                            <td>雲端同步中</td>
+                        </tr>`).join('');
+                } else {
+                    tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;">目前無訂單資料</td></tr>';
+                }
+            
+            } catch (error) {
+                console.error("同步失敗:", error);
+                document.getElementById('admin-sales-rank').innerHTML = '<li>讀取失敗</li>';
+                document.getElementById('admin-feedbacks-table').innerHTML = '<tr><td colspan="8" style="text-align:center; color:red;">無法讀取雲端資料，請確認 Google Apps Script 部署設定是否為「任何人」</td></tr>';
+            }
+        }
 
                 document.getElementById('admin-sales-rank').innerHTML = Object.entries(stats)
                     .map(([n, c]) => `<li>${n}: <strong>${c} 件</strong></li>`).join('');
