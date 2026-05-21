@@ -75,7 +75,6 @@
 
     <script>
         function checkLogin() {
-            // 密碼驗證邏輯
             if (document.getElementById('admin-pass').value === "pet5") {
                 localStorage.setItem('isAdminLoggedIn', 'true');
                 location.reload();
@@ -115,16 +114,14 @@
                 const stats = {'智能自動定時餵食機': 0, '有機天然貓草深層紓壓罐頭': 0, '人體工學舒脊寵物保暖減壓床': 0};
                 
                 if (Array.isArray(history)) {
-                    history.forEach(h => {
-                        const items = h.items || "";
-                        items.split(', ').forEach(item => {
-                            for (let key in stats) {
-                                if (item.includes(key)) {
-                                    const match = item.match(/x\s*(\d+)/);
-                                    stats[key] += match ? parseInt(match[1]) : 1;
-                                }
+                    history.forEach(fb => {
+                        const items = fb.items || "";
+                        for (let key in stats) {
+                            if (items.includes(key)) {
+                                const match = items.match(/x\s*(\d+)/);
+                                stats[key] += match ? parseInt(match[1]) : 1;
                             }
-                        });
+                        }
                     });
                 }
 
@@ -135,28 +132,27 @@
                 if (Array.isArray(history) && history.length > 0) {
                     tableBody.innerHTML = history.map((fb) => `
                         <tr>
-                            <td>${fb.orderId || '無'}</td>
+                            <td>${fb.orderId || '-'}</td>
                             <td>${fb.time || '-'}</td>
                             <td>${fb.name || '-'}</td>
                             <td>${fb.phone || '-'}</td>
                             <td>${fb.store || '-'}</td>
                             <td>${fb.items || '-'}</td>
                             <td>${fb.rating || 0} 星</td>
-                            <td>雲端同步中</td>
+                            <td>✅ 已同步</td>
                         </tr>`).join('');
                 } else {
                     tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;">目前無訂單資料</td></tr>';
                 }
             } catch (error) {
                 console.error("同步失敗:", error);
-                document.getElementById('admin-feedbacks-table').innerHTML = '<tr><td colspan="8" style="text-align:center; color:red;">無法讀取雲端資料，請檢查 Google Sheet 設定</td></tr>';
+                document.getElementById('admin-feedbacks-table').innerHTML = '<tr><td colspan="8" style="text-align:center; color:red;">無法讀取雲端資料，請確認後端部署與權限設定。</td></tr>';
             }
         }
 
         function exportToExcel() { alert("請直接下載 Google Sheet 檔案進行匯出。"); }
         function clearData() { alert("為保護資料安全，請直接在 Google Sheet 中清空資料。"); }
 
-        // 初始化檢查：如果登入過就直接顯示
         if(localStorage.getItem('isAdminLoggedIn') === 'true') {
             document.getElementById('login-overlay').style.display = 'none';
             document.getElementById('admin-content').style.display = 'block';
