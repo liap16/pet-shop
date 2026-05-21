@@ -181,9 +181,9 @@
         };
 
         try {
+            // 已調整為正確傳輸模式，解決資料無法寫入問題
             await fetch(SCRIPT_URL, {
                 method: 'POST',
-                mode: 'no-cors',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(orderData)
             });
