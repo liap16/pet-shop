@@ -49,21 +49,9 @@
         </section>
 
         <section class="admin-section">
-            <h3>🖼️ 商品圖片管理</h3>
-            <table>
-                <thead><tr><th>商品名稱</th><th>更換圖片</th></tr></thead>
-                <tbody>
-                    <tr><td>智能自動定時餵食機</td><td><input type="file" accept="image/*" onchange="uploadImage(0, this)"></td></tr>
-                    <tr><td>有機天然貓草深層紓壓罐頭</td><td><input type="file" accept="image/*" onchange="uploadImage(1, this)"></td></tr>
-                    <tr><td>人體工學舒脊寵物保暖減壓床</td><td><input type="file" accept="image/*" onchange="uploadImage(2, this)"></td></tr>
-                </tbody>
-            </table>
-        </section>
-
-        <section class="admin-section">
             <h3>👤 最新消費者訂單</h3>
             <table id="order-table">
-                <thead><tr><th>訂單編號</th><th>時間</th><th>姓名</th><th>電話</th><th>取貨門市</th><th>商品</th><th>滿意度</th><th>操作</th></tr></thead>
+                <thead><tr><th>訂單編號</th><th>時間</th><th>姓名</th><th>電話</th><th>取貨門市</th><th>商品</th><th>滿意度</th></tr></thead>
                 <tbody id="admin-feedbacks-table"></tbody>
             </table>
             <div class="btn-action-group">
@@ -80,85 +68,59 @@
             if (document.getElementById('admin-pass').value === "pet5") {
                 localStorage.setItem('isAdminLoggedIn', 'true');
                 location.reload();
-            } else { 
-                alert("❌ 密碼錯誤！"); 
-            }
-        }
-
-        function uploadImage(id, input) {
-            const file = input.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.src = e.target.result;
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 300; 
-                    const scaleSize = MAX_WIDTH / img.width;
-                    canvas.width = MAX_WIDTH;
-                    canvas.height = img.height * scaleSize;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    localStorage.setItem(`prod-img-${id}`, canvas.toDataURL('image/jpeg', 0.5));
-                    alert("✅ 圖片已儲存！");
-                };
-            };
-            reader.readAsDataURL(file);
+            } else { alert("❌ 密碼錯誤！"); }
         }
 
         async function refreshDashboard() {
             try {
-                // 使用 fetch 讀取資料
+                // 讀取包含 orders 和 products 的完整資料包
                 const response = await fetch(SCRIPT_URL);
-                const history = await response.json();
+                const data = await response.json();
+                const orders = data.orders; // 抓取訂單陣列
                 
+                // 統計銷量
                 const stats = {
                     '智能自動定時餵食機': 0, 
                     '有機天然貓草深層紓壓罐頭': 0, 
                     '人體工學舒脊寵物保暖減壓床': 0
                 };
                 
-                if (Array.isArray(history)) {
-                    history.forEach(fb => {
-                        const items = fb.items || "";
-                        for (let key in stats) {
-                            if (items.includes(key)) {
-                                const regex = new RegExp(key + ".*x\\s*(\\d+)", "i");
-                                const match = items.match(regex);
-                                stats[key] += match ? parseInt(match[1]) : 1;
-                            }
+                orders.forEach(order => {
+                    const items = order.items || "";
+                    for (let key in stats) {
+                        if (items.includes(key)) {
+                            stats[key] += 1;
                         }
-                    });
-                }
+                    }
+                });
 
                 document.getElementById('admin-sales-rank').innerHTML = Object.entries(stats)
                     .map(([n, c]) => `<li>${n}: <strong>${c} 件</strong></li>`).join('');
 
+                // 顯示訂單表格
                 const tableBody = document.getElementById('admin-feedbacks-table');
-                if (Array.isArray(history) && history.length > 0) {
-                    tableBody.innerHTML = history.map((fb) => `
+                if (orders.length > 0) {
+                    tableBody.innerHTML = orders.map((o) => `
                         <tr>
-                            <td>${fb.orderId || '-'}</td>
-                            <td>${fb.time || '-'}</td>
-                            <td>${fb.name || '-'}</td>
-                            <td>${fb.phone || '-'}</td>
-                            <td>${fb.store || '-'}</td>
-                            <td>${fb.items || '-'}</td>
-                            <td>${fb.rating || 0} 星</td>
-                            <td>✅ 已同步</td>
+                            <td>${o.orderId || '-'}</td>
+                            <td>${o.time || '-'}</td>
+                            <td>${o.name || '-'}</td>
+                            <td>${o.phone || '-'}</td>
+                            <td>${o.store || '-'}</td>
+                            <td>${o.items || '-'}</td>
+                            <td>${o.rating || 0} 星</td>
                         </tr>`).join('');
                 } else {
-                    tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;">目前無訂單資料</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;">目前無訂單資料</td></tr>';
                 }
             } catch (error) {
                 console.error("同步失敗:", error);
-                document.getElementById('admin-feedbacks-table').innerHTML = '<tr><td colspan="8" style="text-align:center; color:red;">無法讀取資料，請確認後端是否已設定 Access-Control-Allow-Origin。</td></tr>';
+                document.getElementById('admin-feedbacks-table').innerHTML = '<tr><td colspan="7" style="text-align:center; color:red;">無法讀取資料。</td></tr>';
             }
         }
 
         function exportToExcel() { alert("請直接下載 Google Sheet 檔案進行匯出。"); }
-        function clearData() { alert("為保護資料安全，請直接在 Google Sheet 中清空資料。"); }
+        function clearData() { alert("請至 Google Sheet 清空訂單分頁。"); }
 
         if(localStorage.getItem('isAdminLoggedIn') === 'true') {
             document.getElementById('login-overlay').style.display = 'none';
