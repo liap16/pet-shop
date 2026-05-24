@@ -156,7 +156,7 @@
     function openCart() { document.getElementById('cart-modal').style.display = 'flex'; }
     function closeCart() { document.getElementById('cart-modal').style.display = 'none'; }
     
-   async function checkout() {
+    async function checkout() {
         if (cart.length === 0) return alert("購物車空的喔！");
         const name = document.getElementById('cust-name').value;
         const phone = document.getElementById('phone').value;
