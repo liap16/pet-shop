@@ -109,7 +109,7 @@
 <script>
     let cart = [];
     let currentRating = 5;
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwnaBAp0g0xk9Ng-kuE7KH19zAXNfOJbjTD5y3S7aY6eWMTGkB687d324OdaaG63b4Aqg/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwMEIRPM-nqy_0PZxFeeGZenVwjvb6Ym_lGBsDO1vNuwDfKbyGapgyQUCw9gWazIAjK9A/exec";
 
     function setStar(val) {
         currentRating = val;
@@ -181,9 +181,10 @@
         };
 
         try {
-            // 已調整為正確傳輸模式，解決資料無法寫入問題
+            // 使用 no-cors 模式，讓瀏覽器允許跨域請求
             await fetch(SCRIPT_URL, {
                 method: 'POST',
+                mode: 'no-cors',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(orderData)
             });
