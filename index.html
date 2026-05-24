@@ -156,7 +156,7 @@
     function openCart() { document.getElementById('cart-modal').style.display = 'flex'; }
     function closeCart() { document.getElementById('cart-modal').style.display = 'none'; }
     
-    async function checkout() {
+   async function checkout() {
         if (cart.length === 0) return alert("購物車空的喔！");
         const name = document.getElementById('cust-name').value;
         const phone = document.getElementById('phone').value;
@@ -181,17 +181,17 @@
         };
 
         try {
-            // 使用 no-cors 模式，讓瀏覽器允許跨域請求
             await fetch(SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(orderData)
             });
-            alert("✅ 訂單已成功送出！");
-            cart = [];
-            updateCart();
-            closeCart();
+            
+            // 訂單送出成功後，跳轉到您的 Google 表單
+            alert("✅ 訂單已成功送出！將為您跳轉至問卷頁面。");
+            window.location.href = "https://docs.google.com/forms/d/e/1FAIpQLScWpoZ3KMdeT7jvcpKClma9NzkCTzEttUje-GUgHios86C6gQ/viewform?usp=header";
+            
         } catch (e) {
             alert("送出失敗，請確認網路連線。");
         } finally {
