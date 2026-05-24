@@ -74,6 +74,8 @@
     </div>
 
     <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwMEIRPM-nqy_0PZxFeeGZenVwjvb6Ym_lGBsDO1vNuwDfKbyGapgyQUCw9gWazIAjK9A/exec";
+
         function checkLogin() {
             if (document.getElementById('admin-pass').value === "pet5") {
                 localStorage.setItem('isAdminLoggedIn', 'true');
@@ -106,9 +108,9 @@
         }
 
         async function refreshDashboard() {
-            const url = "https://script.google.com/macros/s/AKfycbwnaBAp0g0xk9Ng-kuE7KH19zAXNfOJbjTD5y3S7aY6eWMTGkB687d324OdaaG63b4Aqg/exec";
             try {
-                const response = await fetch(url);
+                // 使用 fetch 讀取資料
+                const response = await fetch(SCRIPT_URL);
                 const history = await response.json();
                 
                 const stats = {
@@ -151,7 +153,7 @@
                 }
             } catch (error) {
                 console.error("同步失敗:", error);
-                document.getElementById('admin-feedbacks-table').innerHTML = '<tr><td colspan="8" style="text-align:center; color:red;">無法讀取雲端資料，請確認後端部署與權限設定。</td></tr>';
+                document.getElementById('admin-feedbacks-table').innerHTML = '<tr><td colspan="8" style="text-align:center; color:red;">無法讀取資料，請確認後端是否已設定 Access-Control-Allow-Origin。</td></tr>';
             }
         }
 
