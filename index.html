@@ -23,7 +23,6 @@
         .modal-card { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 500px; max-height: 85vh; overflow-y: auto; border: 2px solid var(--primary-pink); }
         .cart-item { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px dashed #eee; }
         
-        /* 星星與數量按鈕樣式 */
         .star { cursor: pointer; color: #ccc; font-size: 24px; }
         .qty-btn { cursor: pointer; background: #ffe3e3; border: none; border-radius: 5px; padding: 2px 8px; margin: 0 5px; }
         
@@ -53,23 +52,8 @@
     🎀 <strong>修課專案重要聲明：</strong>本平台為亞洲大學經營管理學系「電子商務實務應用」課程建置之模擬電子商務平台，僅供學生進行電子商務平台經營、行銷設計與購物流程實作演練。平台內所呈現之商品、價格、訂單及交易流程皆為虛擬模擬內容，不代表實際販售行為，亦不會產生實際付款、購買、出貨或配送服務。
 </div>
 
-<main class="products-grid">
-    <div class="product-card">
-        <img id="prod-img-0" src="https://via.placeholder.com/300x200" class="prod-img">
-        <h3>智能自動定時餵食機</h3><p>$3,200</p>
-        <button class="btn-add" onclick="addItem('智能自動定時餵食機', 3200)">加入購物車</button>
-    </div>
-    <div class="product-card">
-        <img id="prod-img-1" src="https://via.placeholder.com/300x200" class="prod-img">
-        <h3>有機天然貓草深層紓壓罐頭</h3><p>$180</p>
-        <button class="btn-add" onclick="addItem('有機天然貓草深層紓壓罐頭', 180)">加入購物車</button>
-    </div>
-    <div class="product-card">
-        <img id="prod-img-2" src="https://via.placeholder.com/300x200" class="prod-img">
-        <h3>人體工學舒脊寵物保暖減壓床</h3><p>$1,450</p>
-        <button class="btn-add" onclick="addItem('人體工學舒脊寵物保暖減壓床', 1450)">加入購物車</button>
-    </div>
-</main>
+<main class="products-grid" id="product-container">
+    </main>
 
 <div class="modal-overlay" id="cart-modal">
     <div class="modal-card">
@@ -111,20 +95,31 @@
     let currentRating = 5;
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwn7t2h8lnbTC-pmzp85jHFzYqY9NRHveRKHd7boIVyyQiIrmmRGatbPmnMJo1sG9_mJQ/exec";
 
+    // 初始化：載入商品資料
+    window.addEventListener('load', function() {
+        setStar(5);
+        fetch(SCRIPT_URL)
+            .then(res => res.json())
+            .then(data => {
+                const container = document.getElementById('product-container');
+                data.products.forEach(p => {
+                    container.innerHTML += `
+                        <div class="product-card">
+                            <img src="${p.imageUrl}" class="prod-img" onerror="this.src='https://via.placeholder.com/300x200'">
+                            <h3>${p.name}</h3>
+                            <p>$${p.price}</p>
+                            <button class="btn-add" onclick="addItem('${p.name}', ${p.price})">加入購物車</button>
+                        </div>
+                    `;
+                });
+            });
+    });
+
     function setStar(val) {
         currentRating = val;
         const stars = document.querySelectorAll('.star');
         stars.forEach((s, i) => s.style.color = i < val ? '#ffcc00' : '#ccc');
     }
-
-    window.addEventListener('load', function() {
-        for(let i = 0; i < 3; i++) {
-            const savedImg = localStorage.getItem(`prod-img-${i}`);
-            const imgElement = document.getElementById(`prod-img-${i}`);
-            if(savedImg && imgElement) imgElement.src = savedImg;
-        }
-        setStar(5);
-    });
 
     function addItem(name, price) {
         let found = cart.find(i => i.name === name);
@@ -187,11 +182,8 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(orderData)
             });
-            
-            // 訂單送出成功後，跳轉到您的 Google 表單
             alert("✅ 訂單已成功送出！將為您跳轉至問卷頁面。");
             window.location.href = "https://docs.google.com/forms/d/e/1FAIpQLScWpoZ3KMdeT7jvcpKClma9NzkCTzEttUje-GUgHios86C6gQ/viewform?usp=header";
-            
         } catch (e) {
             alert("送出失敗，請確認網路連線。");
         } finally {
